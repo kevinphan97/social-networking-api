@@ -20,8 +20,8 @@
   To start the application, type into the console "npm start".
 
   ## Media
-  ![screenshot]()
-  ![video]()
+  ![screenshot](https://github.com/kevinphan97/social-networking-api/blob/main/assets/NoSQL.png)
+  ![video](https://github.com/kevinphan97/social-networking-api/blob/main/assets/NoSQL%20challenge.mp4)
 
   ## Contribution
   No contribution needed
