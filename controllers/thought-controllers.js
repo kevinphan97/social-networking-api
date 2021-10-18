@@ -43,14 +43,14 @@ const thoughtsController = {
 
     createThoughts({body}, res) {
         Thoughts.create(body)
-            .then((thoughtsData) => {
+            .then((_id) => {
                 return Users.findOneAndUpdate (
                     {
-                        _id: body.userId
+                        _id: params.usersId
                     },
 
                     {
-                        $push: {thoughts: thoughtsData._id}
+                        $push: {thoughts: _id}
                     },
 
                     {
@@ -59,13 +59,13 @@ const thoughtsController = {
                 );
             })
 
-            .then((dbUsersData) => {
-                if(!dbUsersData) {
+            .then((dbThoughtsData) => {
+                if(!dbThoughtsData) {
                     res.status(404).json({message: 'There is no user associated with this ID.'});
                     return;
                 }
 
-                res.json(dbUsersData);
+                res.json(dbThoughtsData);
             })
 
             .catch((err) => res.json(err));
