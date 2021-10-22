@@ -1,175 +1,245 @@
-const {Thoughts, Users} = require('../models');
+const { Users, Thoughts } = require('../models');
 
 const thoughtsController = {
-
     getAllThoughts(req, res) {
-        Thoughts.find({})
-            .populate({
-                path: 'reactions',
-                select: '-__V'
-            })
-            
-            .populate({
-                path: 'thoughts',
-                select: '-__V'
-            })
-
-            .select('-__V')
-
-            .then((dbThoughtsData) => res.json(dbThoughtsData))
-
-            .catch((err) => {
-                console.log(err);
-                res.status(400).json(err);
-            });
+        Thoughts.find()
+          .select('-__v')
+          
+          .then((dbThoughtsData) => res.json(dbThoughtsData))
+          
+          .catch(error => { 
+            console.log(error); 
+            res.status(400).json(error); 
+          });
     },
 
     getThoughtsById({params}, res) {
         Thoughts.findOne({_id: params.id})
-            .then((dbThoughtsData) => {
-                if(!dbThoughtsData) {
-                    res.status(404).json({message: 'There is no thought associated with this ID.'});
-                    return;
-                }
-
-                res.json(dbThoughtsData);
-            })
-
-            .catch((err) => {
-                console.log(err);
-                res.status(400).json(err);
-            });
-    },
-
-    createThoughts({body}, res) {
-        Thoughts.create(body)
-            .then((_id) => {
-                return Users.findOneAndUpdate (
-                    {
-                        _id: params.usersId
-                    },
-
-                    {
-                        $push: {thoughts: _id}
-                    },
-
-                    {
-                        new: true
-                    }
-                );
-            })
-
-            .then((dbThoughtsData) => {
-                if(!dbThoughtsData) {
-                    res.status(404).json({message: 'There is no user associated with this ID.'});
-                    return;
-                }
-
-                res.json(dbThoughtsData);
-            })
-
-            .catch((err) => res.json(err));
-    },
-
-    updateThoughts({params, body}, res) {
-        Thoughts.findOneAndUpdate(
-            {
-                _id: params.id
-            }, 
-            
-                body, 
-            
-            {
-                new: true, runValidators: true
+          .select('-__v')
+          
+          .then(dbThoughtsData => {
+            if (!dbThoughtsData) {
+              return res.status(404).json({message: 'There is no thought associated with this ID.'})
             }
-        )
-            .populate({
-                path: 'reactions', 
-                select: '-__V'
-            })
-
-            .select('-__V')
-
-            .then(dbThoughtsData => {
-                if(!dbThoughtsData) {
-                    res.status(404).json({message: 'There is no thought associated with this ID.'});
-                    return;
-                }
-
-                res.json(dbThoughtsData);
-            })
-
-            .catch(err => res.json(err));
+            res.json(dbThoughtsData);
+          })
+          
+          .catch(error => { 
+            console.log(error); 
+            res.status(400).json(error); });
     },
+  
+    createThoughts(req, res) {
+        let thoughtsLocal;
+        
+        Thoughts.create(
+          {
+            thoughtText: req.body.thoughtText,
+            username: req.body.username,
+            userId: req.body.userId
+          }
+        )
+        
+        .then(thoughts => {
+          thoughtsLocal = thoughts;
+          
+          return Users.findOneAndUpdate
+          (
+            {
+              _id: req.body.userId
+            },
+            
+            { 
+              $push: { thoughts: thoughts._id } 
+            },
+            
+            {
+              new: true,
+            }
+          )
+          
+          .populate(
+            {
+              path: 'thoughts',
+              select: '-__v'
+            }
+          )
+          
+          .select('-__v')
+        })
+        
+        .then(users => {
+          if (!users) {
+            res.status(404).json({message: 'There is no user associated with this ID'});
+          }
+          res.json(users); 
+        })
 
+        .catch(error => { 
+          console.log(error); 
+          res.status(400).json(error); 
+        });
+    },
+  
     deleteThoughts({params}, res) {
-        Thoughts.findOneAndDelete({_id: params.id})
-            .then(dbThoughtsData => {
-                if(!dbThoughtsData) {
-                    res.status(404).json({messasge: 'There is no thought associated with this ID.'});
-                    return;
-                }
-
-                res.json(dbThoughtsData);
-            })
-
-            .catch(err => res.status(400).json(err));
-    },
-
-    addReaction({params, body}, res) {
-        Thoughts.findOneAndUpdate(
-            {
-                _id: params.thoughtId
-            }, 
-            
-            {
-                $push: {reactions: body}
-            }, 
-            
-            {
-                new: true, runValidators: true
+        Thoughts.findOneAndDelete({_id: req.params.id})
+          .then(thoughts => {
+            if (!thoughts) {
+              return res.status(404).json({message: 'There is no thought associated with this ID'});
             }
-        )
-            .populate({path: 'reactions', select: '-__V'})
-
-            .select('-__V')
-
-            .then(dbThoughtsData => {
-                if(!dbThoughtsData) {
-                    res.status(404).json({message: 'There is no thought associated with this ID.'});
-                    return;
-                }
-
-                res.json(dbThoughtsData);
-            })
-
-            .catch(err => res.status(400).json(err))
-    },
-
-    deleteReaction({params}, res) {
-        Thoughts.findOneAndUpdate(
-            {
-                _id: params.thoughtsId
-            }, 
             
-            {
-                $pull: {reactions: {reactionId: params.reactionId}}
-            }, 
-            
-            {
+            return Users.findOneAndUpdate
+            (
+              { 
+                _id: req.params.userId
+              },
+
+              { 
+                $pull: {thoughts: req.params.id} 
+              },
+
+              { 
                 new: true
+              }
+            );
+          })
+          
+          .then(usersInfo => {
+            if (!usersInfo) {
+              res.status(404).json({message: 'There is no user asssociated with this ID'});
             }
+            res.json(usersInfo);
+          })
+          
+          .catch(error => { 
+            console.log(error); 
+            res.status(400).json(error); 
+          });
+    },
+  
+    updateThoughts: async (req, res) => {
+        try {
+          const thoughtInfo = await Thoughts.findOneAndUpdate
+          (
+            { 
+              _id: req.params.id 
+            },
+
+            req.body,
+
+            { 
+              new: true
+            }
+          );
+
+          if (!thoughtInfo) {
+            res.status(404).json({message: 'There is no thought associated with this ID'})
+          }
+          res.json(thoughtInfo);
+
+        } catch (error) {
+          console.log(error);
+          res.status(400).json(error);
+        }
+    },
+  
+    addReaction(req, res) {
+        Thoughts.findOneAndUpdate
+        (
+          { 
+            _id: req.params.id 
+          },
+
+          { 
+            $push: { reactions: req.body } 
+          },
+
+          { 
+            new: true 
+          }
         )
-            .then(dbThoughtsData => {
-                if(!dbThoughtsData) {
-                    res.status(404).json({message: 'There is no thought associated with this ID.'});
-                    return;
-                }
+        
+        .then(dbThoughtsData => {
+          if (!dbThoughtsData) {
+            return res.status(404).json({message: 'There is no thought associated with this ID'});
+          }
+          res.json(dbThoughtsData);
+        })
+        
+        .catch(error => { 
+          console.log(error); 
+          res.json(400).json(error); 
+        });
+    },
+  
+    deleteReaction(req, res) {
+        Thoughts.findOneAndUpdate
+        (
+          { 
+            _id: req.params.id 
+          },
 
-                res.json(dbThoughtsData);
-            })
+          { 
+            $pull: {reactions: {reactionId: req.params.reactionId}} 
+          },
 
-            .catch(err => res.status(400).json(err))
+          {
+            new: true 
+          }
+        )
+
+        .then(dbThoughstData => {
+          if (!dbThoughtsData) {
+            return res.status(404).json({message: 'There is no thought associated with this ID'})
+          }
+          res.json(dbThoughtsData);
+        })
+        
+        .catch(error => { 
+          console.log(error); 
+          res.status(500).json(error); });
+    },
+ 
+    updateReaction: async (req, res) => {
+        try {
+          const deletedReaction = await Thoughts.findOneAndUpdate
+          (
+            { 
+              _id: req.params.id 
+            },
+            
+            { 
+              $pull: {reactions: {reactionId: req.params.reactionId}}
+            },
+            
+            { 
+              new: true 
+            } 
+          );
+
+          if (!deletedReaction) {
+            res.status(404).json({message: 'There is no thought associated with this ID'});
+          }
+          
+          const newReaction = await Thought.findOneAndUpdate
+          (
+            { 
+              _id: req.params.id 
+            },
+
+            {
+              $push: {reactions: req.body}
+            },
+
+            { 
+              new: true 
+            }
+          );
+          res.json(newReaction);
+
+        } catch (error) {
+          console.log(error); res.status(400).json(error);
+        }
     }
 };
 
