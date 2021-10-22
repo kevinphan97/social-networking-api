@@ -21,7 +21,7 @@
 
   ## Media
   ![screenshot](https://github.com/kevinphan97/social-networking-api/blob/main/assets/NoSQL.png)
-  ![video](https://github.com/kevinphan97/social-networking-api/blob/main/assets/NoSQL%20challenge.mp4)
+  ![video](https://github.com/kevinphan97/social-networking-api/blob/main/assets/Working%20Social%20Network%20API.mp4)
 
   ## Contribution
   No contribution needed
